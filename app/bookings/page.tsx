@@ -109,19 +109,39 @@ export default function BookingsPage() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        // In a real app, we would fetch from Supabase
-        // const { data, error } = await supabase
-        //   .from('bookings')
-        //   .select('*')
-        //   .order('booking_date', { ascending: false })
+        // Try to fetch from Supabase first
+        let bookingsData = []
+        try {
+          const { data, error } = await supabase
+            .from("bookings")
+            .select("*")
+            .order("booking_date", { ascending: false })
 
-        // if (error) throw error
-        // setBookings(data || [])
+          if (!error && data && data.length > 0) {
+            bookingsData = data
+          }
+        } catch (supabaseError) {
+          console.warn("Error fetching from Supabase:", supabaseError)
+        }
 
-        // For demo purposes, use mock data
-        setBookings(mockBookings)
+        // If no data from Supabase or there was an error, use localStorage
+        if (bookingsData.length === 0) {
+          const storedBookings = localStorage.getItem("myBookings")
+          if (storedBookings) {
+            bookingsData = JSON.parse(storedBookings)
+          }
+        }
+
+        // If we still have no bookings, use mock data for demo
+        if (bookingsData.length === 0) {
+          bookingsData = mockBookings
+        }
+
+        setBookings(bookingsData)
       } catch (error) {
         console.error("Error fetching bookings:", error)
+        // Fallback to mock data
+        setBookings(mockBookings)
       } finally {
         setLoading(false)
       }

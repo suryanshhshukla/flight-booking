@@ -58,7 +58,7 @@ const airports = [
   { code: "BHO", name: "Raja Bhoj Airport", city: "Bhopal" },
   { code: "DHM", name: "Gaggal Airport", city: "Dharamshala" },
   { code: "IXZ", name: "Veer Savarkar International Airport", city: "Port Blair" },
-  { code: "LEH", name: "Kushok Bakula Rimpochee Airport", city: "Leh" }
+  { code: "LEH", name: "Kushok Bakula Rimpochee Airport", city: "Leh" },
 ]
 
 export default function BookingPage() {
@@ -128,8 +128,12 @@ export default function BookingPage() {
     setLoading(true)
 
     try {
-      // Create booking in Supabase
+      // Generate a unique booking ID
+      const bookingId = `BK-${Math.floor(Math.random() * 100000)}`
+
+      // Create booking data
       const bookingData = {
+        id: bookingId,
         flight_id: flightId,
         from_code: fromCode,
         to_code: toCode,
@@ -142,21 +146,46 @@ export default function BookingPage() {
         status: "confirmed",
       }
 
-      // Insert booking data into Supabase
-      const { data, error } = await supabase.from("bookings").insert([bookingData]).select()
+      // Store in localStorage for demo purposes (in addition to Supabase)
+      const existingBookings = JSON.parse(localStorage.getItem("myBookings") || "[]")
+      localStorage.setItem("myBookings", JSON.stringify([...existingBookings, bookingData]))
 
-      if (error) throw error
+      // Try to insert into Supabase if available
+      try {
+        const { data, error } = await supabase.from("bookings").insert([bookingData]).select()
+        if (error) throw error
+      } catch (supabaseError) {
+        console.warn("Supabase storage failed, using local storage only:", supabaseError)
+        // Continue with local storage only
+      }
 
       // Update wallet balance if paid from wallet
       if (paymentMethod === "wallet") {
-        setWalletBalance((prev) => prev - totalAmount)
+        const newBalance = walletBalance - totalAmount
+        setWalletBalance(newBalance)
+        localStorage.setItem("walletBalance", newBalance.toString())
 
-        // Store updated wallet balance in local storage
-        localStorage.setItem("walletBalance", (walletBalance - totalAmount).toString())
+        // Add transaction record
+        const transactionData = {
+          id: `TX-${Math.floor(Math.random() * 100000)}`,
+          type: "debit",
+          amount: totalAmount,
+          description: `Flight booking: ${fromCode} to ${toCode}`,
+          date: new Date().toISOString(),
+        }
+
+        const existingTransactions = JSON.parse(localStorage.getItem("walletTransactions") || "[]")
+        localStorage.setItem("walletTransactions", JSON.stringify([transactionData, ...existingTransactions]))
       }
 
+      // Show success message
+      toast({
+        title: "Booking Successful",
+        description: `Your booking (ID: ${bookingId}) has been confirmed!`,
+        variant: "default",
+      })
+
       // Navigate to confirmation page
-      const bookingId = data?.[0]?.id || "TEMP-" + Math.floor(Math.random() * 1000000)
       router.push(`/flights/confirmation?bookingId=${bookingId}`)
     } catch (error) {
       console.error("Booking error:", error)
@@ -175,6 +204,18 @@ export default function BookingPage() {
     const storedBalance = localStorage.getItem("walletBalance")
     if (storedBalance) {
       setWalletBalance(Number.parseInt(storedBalance))
+    }
+  }, [])
+
+  // Load existing bookings from localStorage
+  useEffect(() => {
+    const storedBookings = localStorage.getItem("myBookings")
+    if (storedBookings) {
+      // This is just to initialize the local storage if needed
+      // We don't need to set state here as we're just ensuring the storage exists
+      console.log("Found existing bookings in local storage:", JSON.parse(storedBookings).length)
+    } else {
+      localStorage.setItem("myBookings", JSON.stringify([]))
     }
   }, [])
 

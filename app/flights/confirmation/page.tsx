@@ -51,7 +51,7 @@ const airports = [
   { code: "BHO", name: "Raja Bhoj Airport", city: "Bhopal" },
   { code: "DHM", name: "Gaggal Airport", city: "Dharamshala" },
   { code: "IXZ", name: "Veer Savarkar International Airport", city: "Port Blair" },
-  { code: "LEH", name: "Kushok Bakula Rimpochee Airport", city: "Leh" }
+  { code: "LEH", name: "Kushok Bakula Rimpochee Airport", city: "Leh" },
 ]
 
 export default function ConfirmationPage() {
@@ -65,8 +65,19 @@ export default function ConfirmationPage() {
   useEffect(() => {
     const fetchBooking = async () => {
       try {
-        // If bookingId starts with TEMP-, it's a temporary booking (for demo purposes)
-        if (bookingId.startsWith("TEMP-")) {
+        // First check localStorage for the booking
+        const storedBookings = localStorage.getItem("myBookings")
+        if (storedBookings) {
+          const bookings = JSON.parse(storedBookings)
+          const foundBooking = bookings.find((b) => b.id === bookingId)
+          if (foundBooking) {
+            setBooking(foundBooking)
+            return
+          }
+        }
+
+        // If bookingId starts with TEMP- or BK-, it's a temporary booking (for demo purposes)
+        if (bookingId.startsWith("TEMP-") || bookingId.startsWith("BK-")) {
           // Create a mock booking
           setBooking({
             id: bookingId,

@@ -29,10 +29,10 @@ export function Navbar() {
             Home
           </Link>
           <Link
-            href="/flights"
-            className={`text-sm font-medium transition-colors ${pathname === "/flights" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            href="/flights/popular"
+            className={`text-sm font-medium transition-colors ${pathname.startsWith("/flights") ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
-            Flights
+            Popular Flights
           </Link>
           <Link
             href="/bookings"
@@ -73,11 +73,11 @@ export function Navbar() {
               Home
             </Link>
             <Link
-              href="/flights"
-              className={`text-sm font-medium transition-colors ${pathname === "/flights" ? "text-foreground" : "text-muted-foreground"}`}
+              href="/flights/popular"
+              className={`text-sm font-medium transition-colors ${pathname.startsWith("/flights") ? "text-foreground" : "text-muted-foreground"}`}
               onClick={() => setIsMenuOpen(false)}
             >
-              Flights
+              Popular Flights
             </Link>
             <Link
               href="/bookings"
